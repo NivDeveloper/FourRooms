@@ -19,8 +19,8 @@ import random
 #CONSTANTS
 EPOCHS      = 500
 #LEARN_RATE  = 0.5
-E_GREEDY    = 0.5   #random action if < E. max action otherwise
-DEC_RATE    = 0.6   #rate at which E_GREEDY is decreased each iteration
+E_GREEDY    = 0.99   #random action if < E. max action otherwise
+DEC_RATE    = 0.99   #rate at which E_GREEDY is decreased each iteration
 DISCOUNT    = 0.9
 
 #create Q table and R table with following format
@@ -46,7 +46,7 @@ R = np.array([l for i in range(169)])
 def update_Q(FR, Q, prevPos, action, visited):
     #index before action took place
     index = prevPos[0] + prevPos[1]*13
-    l_rate = 1/(1 + 0.3*visited[index][action])
+    l_rate = 1/(1 + 1.5*visited[index][action])
     #update Q value for position before action took place
     Q[index][action] += l_rate*(R[index][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13])) - Q[index][action])
     
@@ -69,7 +69,7 @@ def update_R(FR, R, prevPos, action, CellType):
     #if action hit the package
     if CellType == 1 or CellType == 2 or CellType == 3:
         print("package found")
-        R[index][action] = 100
+        R[index][action] = FR.getPackagesRemaining()*FR.getPackagesRemaining()*50
     
 
 
