@@ -1,5 +1,2 @@
 numpy
 matplotlib
-torch
-torchvision
-torchaudio
