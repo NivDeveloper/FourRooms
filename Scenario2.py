@@ -17,60 +17,57 @@ import random
 # E greedy
 
 #CONSTANTS
-EPOCHS      = 500
-#LEARN_RATE  = 0.5
-E_GREEDY    = 0.99   #random action if < E. max action otherwise
-DEC_RATE    = 0.99   #rate at which E_GREEDY is decreased each iteration
-DISCOUNT    = 0.9
+EPOCHS      = 5000
+#LEARN_RATE = 0.5
+E_GREEDY    = 0.6   #random action if < E. max action otherwise
+DEC_RATE    = 0.8   #rate at which E_GREEDY is decreased each iteration
+DISCOUNT    = 0.4
 
 #create Q table and R table with following format
-#___________________
-#(x,y)  | (N,S,E,W)
-#-------|----------
-#(0,1)  | [0,0,0,0]
-#(0,2)  | [0,0,0,0]
-#  .  
+#__________________________
+#(x,y)  |numpack| (N,S,E,W)
+#-------|-------|----------
+#(0,1)  |   0   | [0,0,0,0]
+#(0,1)  |   1   | [0,0,0,0]
+#(0,1)  |   2   | [0,0,0,0]
+#(0,1)  |   3   | [0,0,0,0]
+#(0,2)  |   0   | [0,0,0,0]
+#(0,2)  |   1   | [0,0,0,0]
+#  . 
 #  .
 #  .
-#(13,13)| [0,0,0,0]
-#___________________
-l = [0,0,0,0]
+#(13,13)|   3   | [0,0,0,0]
+#__________________________
+p = [0,0,0,0]
+l = np.array([p for i in range(4)])
 #Q table
-#             N S E W  
-Q = np.array([l for i in range(169)])
-
+Q = np.array([np.array([[0,0,0,0] for i in range(4)]) for i in range(169)])
 #R table
-#             N S E W  
-R = np.array([l for i in range(169)])
+R = np.array([np.array([[0,0,0,0] for i in range(4)]) for i in range(169)])
 
-def update_Q(FR, Q, prevPos, action, visited):
+def update_Q(FR, Q, prevPos, action, visited, packleft):
     #index before action took place
     index = prevPos[0] + prevPos[1]*13
-    l_rate = 1/(1 + 1.5*visited[index][action])
-    #update Q value for position before action took place
-    Q[index][action] += l_rate*(R[index][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13])) - Q[index][action])
+    #make negative learning rate for positions that have been visited before
     
-    #update learning rate
-    #update greedy value
-    #uupdate discout value
-                                                            
-
-
-def update_R(FR, R, prevPos, action, CellType):
+    l_rate = 1/(1 + visited[index][packleft][action])
+    #update Q value for position before action took place
+    Q[index][packleft][action] += l_rate*(R[index][packleft][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13][packleft])) - Q[index][packleft][action]) - 1 - visited[index][packleft][action]
+    
+def update_R(FR, R, prevPos, action, CellType, visited, packleft):
     
     index = prevPos[0] + prevPos[1]*13
     
     #if action hit a wall
     if prevPos == FR.getPosition():
-        #print(prevPos, FR.getPosition(), action)
-        #print("found -1")
-        R[index][action] = -1
+        R[index][packleft][action] -= 2
     
     #if action hit the package
-    if CellType == 1 or CellType == 2 or CellType == 3:
-        print("package found")
-        R[index][action] = FR.getPackagesRemaining()*FR.getPackagesRemaining()*50
-    
+    elif CellType == 1 or CellType == 2 or CellType == 3:
+        R[index][packleft][action] = 300
+        R[FR.getPosition()[1]*13 + FR.getPosition()[0]][packleft] = [0,0,0,0]
+    #else:
+    #   R[index][packleft][action] -= 0.1*visited[index][packleft][action]
 
 
 def LearningLoop(FRobj, Q, R, EPOCHS):
@@ -85,50 +82,53 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
         prevPos = FRobj.getPosition()
         
         #table showing how many times each state action pair has been visited
-        #                   N S E W  
-        visited = np.array([[0,0,0,0] for x in range(169)])
+        visited = np.array([np.array([[0,0,0,0] for i in range(4)]) for i in range(169)])
+        #number of packages left
         E = E_GREEDY
+        packleft = 3
+        #print("--------------")
         print(k)
         while not FRobj.isTerminal():
             index = prevPos[0] + prevPos[1]*13
-            #print(prevPos)
+            
+            #print(visited)
             #use exploration heuristic to determine if next action is random or max action
-            #print(Q)
             if random.random() < E:
                 #random action from valid actions
-                choices = []
-                #print("random ",prevPos)
-                for i in range(4):
+                #choices = []
+                #for i in range(4):
                     #only select from valid rewards from R
-                    if R[index][i] >= 0:
-                        choices.append(i)
-                action = choices[random.randint(0,len(choices)-1)]
-                #print(prevPos, action, choices)
-                visited[index][action] += 1
+                #    if R[index][packleft][i] >= 0:
+                #        choices.append(i)
+                action = random.randint(0,3)#choices[random.randint(0,len(choices)-1)]
+                visited[index][packleft][action] += 1
                 CellType, newPos, numpack, terminal =FRobj.takeAction(action)
             else:
                 #take max action based on max Q
                 choices = []
-                #print("chosen ",prevPos)
                 action = 0
                 for i in range(4):
                     #find list of maximum Q choices
-                    if Q[index][i] == max(Q[index]):
+                    if Q[index][packleft][i] == max(Q[index][packleft]):
                         #if only zeros in Q table then choose randomly from all actions
                         choices.append(i)
                         
                 action = choices[random.randint(0,len(choices)-1)]
-                visited[index][action] += 1
-                CellType, newPos, numpack, terminal =FRobj.takeAction(action)
-            #print(CellType)
-            update_R(FRobj, R, prevPos, action, CellType)
-            update_Q(FRobj, Q, prevPos, action, visited)
+                #print(Q[index], action)
+                visited[index][packleft][action] += 1
+                CellType, newPos, numpack, terminal = FRobj.takeAction(action)
+            update_R(FRobj, R, prevPos, action, CellType, visited, packleft)
+            update_Q(FRobj, Q, prevPos, action, visited, packleft)
 
 
             #update prevpos
             prevPos = FRobj.getPosition()
-            #incrementally decrease E_GREEDY
-            E *= DEC_RATE
+            #update packleftt and incrementally decrease E_GREEDY
+            if CellType > 0:
+                #E = E_GREEDY
+                packleft -= 1
+            else:
+                E *= DEC_RATE
             #update learning rate
 
 def main():
