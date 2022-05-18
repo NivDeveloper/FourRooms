@@ -40,7 +40,7 @@ def update_Q(FR, Q, prevPos, action, visited, packleft):
     
     l_rate = 1/(1 + visited[index][packleft][action])
     #update Q value for position before action took place
-    Q[index][packleft][action] += l_rate*(R[index][packleft][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13][packleft])) - Q[index][packleft][action]) - 3 - visited[index][packleft][action]
+    Q[index][packleft][action] += l_rate*(R[index][packleft][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13][packleft])) - Q[index][packleft][action]) - 1 - visited[index][packleft][action]
     
 def update_R(FR, R, prevPos, action, CellType, visited, packleft):
     
@@ -51,10 +51,14 @@ def update_R(FR, R, prevPos, action, CellType, visited, packleft):
         R[index][packleft][action] -= 2
     
     #if action hit the package
-    elif CellType == 1 or CellType == 2 or CellType == 3:
-        R[index][packleft][action] = 2000
-        #R[FR.getPosition()[1]*13 + FR.getPosition()[0]][packleft] = [0,0,0,0]
-    #else:
+    elif (CellType == 1 or CellType == 2 or CellType == 3):
+        if CellType == (4 - packleft):
+            
+            R[index][packleft][action] = 1000
+            R[FR.getPosition()[1]*13 + FR.getPosition()[0]][packleft] = [0,0,0,0]
+        else:
+            R[index][packleft][action] -= 5
+        
     #   R[index][packleft][action] -= 0.1*visited[index][packleft][action]
 
 
@@ -76,11 +80,10 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
         packleft = 3
         #print("--------------")
         os.system("clear")
-        print("Training... number of epochs (", k, "/5000)")
+        print("Training... number of epochs (", k, "/", EPOCHS,")")
         while not FRobj.isTerminal():
             index = prevPos[0] + prevPos[1]*13
             
-            #print(visited)
             #use exploration heuristic to determine if next action is random or max action
             if random.random() < E:
                 action = random.randint(0,3)
@@ -117,7 +120,7 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
 def main():
 
     # Create FourRooms Object
-    fourRoomsObj = FourRooms('rgb')
+    fourRoomsObj = FourRooms('multi')
 
     # This will try to draw a zero
     actSeq = [FourRooms.LEFT, FourRooms.LEFT, FourRooms.LEFT,
