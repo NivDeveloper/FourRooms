@@ -4,7 +4,7 @@ import numpy as np
 import random 
 
 #CONSTANTS
-EPOCHS      = 10000
+EPOCHS      = 5000
 E_GREEDY    = 0.5   #random action if < E. max action otherwise
 DEC_RATE    = 0.6   #rate at which E_GREEDY is decreased each iteration
 DISCOUNT    = 0.9
@@ -43,11 +43,12 @@ def update_R(FR, R, prevPos, action):
     
     #if action hit a wall
     if prevPos == FR.getPosition():
-        R[index][action] = -1
+        R[index][action] -= 1
     
     #if action hit the package
-    if FR.getPackagesRemaining() == 0:
+    elif FR.getPackagesRemaining() == 0:
         R[index][action] = 100
+
     
 
 
@@ -74,13 +75,13 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
             #use exploration heuristic to determine if next action is random or max action
             if random.random() < E:
                 #random action from valid actions
-                choices = []
+                #choices = []
                 
-                for i in range(4):
-                    #only select from valid rewards from R
-                    if R[index][i] >= 0:
-                        choices.append(i)
-                action = choices[random.randint(0,len(choices)-1)]
+                #for i in range(4):
+                #    #only select from valid rewards from R
+                #    if R[index][i] >= 0:
+                #        choices.append(i)
+                action = random.randint(0,3)#choices[random.randint(0,len(choices)-1)]
                 
                 visited[index][action] += 1
                 FRobj.takeAction(action)#CellType, prevPos, numpack, terminal = 
