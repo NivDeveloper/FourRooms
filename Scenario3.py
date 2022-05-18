@@ -6,7 +6,6 @@ import random
 
 #CONSTANTS
 EPOCHS      = 5000
-#LEARN_RATE = 0.5
 E_GREEDY    = 0.6   #random action if < E. max action otherwise
 DEC_RATE    = 0.8   #rate at which E_GREEDY is decreased each iteration
 DISCOUNT    = 0.4
@@ -26,8 +25,7 @@ DISCOUNT    = 0.4
 #  .
 #(13,13)|   3   | [0,0,0,0]
 #__________________________
-p = [0,0,0,0]
-l = np.array([p for i in range(4)])
+
 #Q table
 Q = np.array([np.array([[0,0,0,0] for i in range(4)]) for i in range(169)])
 #R table
@@ -37,10 +35,9 @@ def update_Q(FR, Q, prevPos, action, visited, packleft):
     #index before action took place
     index = prevPos[0] + prevPos[1]*13
     #make negative learning rate for positions that have been visited before
-    
     l_rate = 1/(1 + visited[index][packleft][action])
     #update Q value for position before action took place
-    Q[index][packleft][action] += l_rate*(R[index][packleft][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13][packleft])) - Q[index][packleft][action]) - 1 - visited[index][packleft][action]
+    Q[index][packleft][action] += l_rate*(R[index][packleft][action] + DISCOUNT*(max(Q[FR.getPosition()[0] + FR.getPosition()[1]*13][packleft])) - Q[index][packleft][action]) - visited[index][packleft][action]
     
 def update_R(FR, R, prevPos, action, CellType, visited, packleft):
     
@@ -58,8 +55,6 @@ def update_R(FR, R, prevPos, action, CellType, visited, packleft):
             R[FR.getPosition()[1]*13 + FR.getPosition()[0]][packleft] = [0,0,0,0]
         else:
             R[index][packleft][action] -= 5
-        
-    #   R[index][packleft][action] -= 0.1*visited[index][packleft][action]
 
 
 def LearningLoop(FRobj, Q, R, EPOCHS):
@@ -78,7 +73,6 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
         #number of packages left
         E = E_GREEDY
         packleft = 3
-        #print("--------------")
         os.system("clear")
         print("Training... number of epochs (", k, "/", EPOCHS,")")
         while not FRobj.isTerminal():
@@ -100,12 +94,11 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
                         choices.append(i)
                         
                 action = choices[random.randint(0,len(choices)-1)]
-                #print(Q[index], action)
                 visited[index][packleft][action] += 1
+                
                 CellType, newPos, numpack, terminal = FRobj.takeAction(action)
             update_R(FRobj, R, prevPos, action, CellType, visited, packleft)
             update_Q(FRobj, Q, prevPos, action, visited, packleft)
-
 
             #update prevpos
             prevPos = FRobj.getPosition()
