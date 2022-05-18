@@ -1,7 +1,6 @@
 import os
 from FourRooms import FourRooms
 import numpy as np
-import matplotlib
 import random 
 
 #CONSTANTS

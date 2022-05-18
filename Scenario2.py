@@ -1,7 +1,6 @@
 import os
 from FourRooms import FourRooms
 import numpy as np
-import matplotlib
 import random 
 
 #CONSTANTS
@@ -53,9 +52,6 @@ def update_R(FR, R, prevPos, action, CellType, visited, packleft):
     #if action hit the package
     elif CellType == 1 or CellType == 2 or CellType == 3:
         R[index][packleft][action] = 2000
-        #R[FR.getPosition()[1]*13 + FR.getPosition()[0]][packleft] = [0,0,0,0]
-    #else:
-    #   R[index][packleft][action] -= 0.1*visited[index][packleft][action]
 
 
 def LearningLoop(FRobj, Q, R, EPOCHS):
@@ -74,13 +70,11 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
         #number of packages left
         E = E_GREEDY
         packleft = 3
-        #print("--------------")
         os.system("clear")
         print("Training... number of epochs (", k, "/5000)")
         while not FRobj.isTerminal():
             index = prevPos[0] + prevPos[1]*13
             
-            #print(visited)
             #use exploration heuristic to determine if next action is random or max action
             if random.random() < E:
                 action = random.randint(0,3)
@@ -97,12 +91,11 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
                         choices.append(i)
                         
                 action = choices[random.randint(0,len(choices)-1)]
-                #print(Q[index], action)
                 visited[index][packleft][action] += 1
                 CellType, newPos, numpack, terminal = FRobj.takeAction(action)
+                
             update_R(FRobj, R, prevPos, action, CellType, visited, packleft)
             update_Q(FRobj, Q, prevPos, action, visited, packleft)
-
 
             #update prevpos
             prevPos = FRobj.getPosition()
@@ -112,7 +105,6 @@ def LearningLoop(FRobj, Q, R, EPOCHS):
                 packleft -= 1
             else:
                 E *= DEC_RATE
-            #update learning rate
 
 def main():
 
